@@ -1,62 +1,162 @@
 local HighwayLayer, parent = torch.class('nn.HighwayLayer', 'nn.Sequential')
 
-function HighwayLayer:__init(sz, transfer, bias, dropout)
+local function OneMinus()
+	local mlp = nn.Sequential()
+	mlp:add(nn.MulConstant(-1))
+	mlp:add(nn.AddConstant(1))
+	return mlp
+end
+
+local function Gate(sz, bias)
+	local mlp = nn.Sequential()
+	mlp:add(nn.Linear(sz, sz))
+	mlp:add(nn.AddConstant(bias))
+	mlp:add(nn.Sigmoid())
+
+	local ct = nn.ConcatTable()
+	ct:add(nn.Identity())
+	ct:add(OneMinus())
+	mlp:add(ct)
+	return mlp
+end
+
+local function Transfer(sz, transfer)
+	local mlp = nn.Sequential()
+	mlp:add(nn.Linear(sz, sz))
+	mlp:add(transfer:clone())
+	return mlp
+end
+
+local function GateAndTransfer(sz, transfer, bias)
+	local mlp = nn.ConcatTable()
+	mlp:add(Gate(sz, bias))
+	mlp:add(Transfer(sz, transfer))
+	return mlp
+end
+
+local function DroppedOutGateAndTransfer(sz, transfer, bias, dropout)
+	local mlp = nn.Sequential()
+	mlp:add(nn.Dropout(dropout)) -- DON'T try to inline this!
+	mlp:add(GateAndTransfer(sz, transfer, bias))
+	return mlp
+end
+
+function HighwayLayer:__init(num_layers, sz, transfer, bias, dropout)
 	parent.__init(self)
 --[=[
-	Ultimately, we need transfer(x) * sigmoid(x) + (1-sigmoid(x)) * x
-	x
-	-> {transfer(x), gate(x), x}                  | components
-	-> {gate(x) * transfer(x), (1-gate(x)), x}    | stage1
-	-> {gate(x) * transfer(x), x*(1-gate(x))}     | stage2
-	-> {gate(x) * transfer(x) + x * (1-gate(x))}  | stage3
+	Ultimately, we need transfer(dropout(x)) * sigmoid(dropout(x)) + (1-sigmoid(dropout(x))) * x
+	It _needs_ (maybe) to be the same dropout on all of these!
 ]=]
-	local components = nn.ConcatTable()
-	local gate = nn.Sequential()
-	gate:add(nn.Linear(sz, sz))
-	gate:add(nn.AddConstant(bias, true))
-	gate:add(nn.Sigmoid())
-	components:add(gate)
+	dropout = dropout or 0.0 -- No dropout if it's not specified.
+	for i = 1,num_layers do
+		local stage1 = nn.ConcatTable()
+			stage1:add(nn.Identity())
+			stage1:add(DroppedOutGateAndTransfer(sz, transfer, bias, dropout))
+		self:add(stage1)
+		self:add(nn.FlattenTable()) -- Presumably, now we have {X, S(D(X)), (1-S(D(X))), T(D(X))} in a table.
 
-	local carry = nn.Sequential()
-	carry:add(nn.Linear(sz, sz))
-	carry:add(transfer:clone())
-	components:add(carry)
-
-
-	components:add(nn.Identity())
-	self:add(components)
-
-	local stage1 = nn.ConcatTable()
-		local stage1gt = nn.Sequential()
-		local pieces = nn.ConcatTable()
-		pieces:add(nn.SelectTable(1))
-		pieces:add(nn.SelectTable(2))
-		stage1gt:add(pieces)
-		stage1gt:add(nn.CMulTable())
-		stage1:add(stage1gt)
-
-		local stage1oneminusg = nn.Sequential()
-		stage1oneminusg:add(nn.SelectTable(1))
-		stage1oneminusg:add(nn.MulConstant(-1, true))
-		stage1oneminusg:add(nn.AddConstant(1, true))
-		stage1:add(stage1oneminusg)
-
-		stage1:add(nn.SelectTable(3))
-
-	self:add(stage1)
-
-	local stage2 = nn.ConcatTable()
-		stage2:add(nn.SelectTable(1))
-		local stage2recall = nn.Sequential()
-		local pieces = nn.ConcatTable()
-		pieces:add(nn.SelectTable(2))
-		pieces:add(nn.SelectTable(3))
-		stage2recall:add(pieces)
-		stage2recall:add(nn.CMulTable())
-		stage2:add(stage2recall)
-	
-	self:add(stage2)
-	self:add(nn.CAddTable())
-	self:add(nn.Dropout(dropout, true))
+		local stage2 = nn.ConcatTable()
+			local stage2carry = nn.Sequential()
+				local carrygather = nn.ConcatTable()
+				carrygather:add(nn.SelectTable(1))
+				carrygather:add(nn.SelectTable(3))
+				stage2carry:add(carrygather)
+				stage2carry:add(nn.CMulTable())
+			stage2:add(stage2carry)
+			local stage2transfer = nn.Sequential()
+				local transfergather = nn.ConcatTable()
+				transfergather:add(nn.SelectTable(2))
+				transfergather:add(nn.SelectTable(4))
+				stage2transfer:add(transfergather)
+				stage2transfer:add(nn.CMulTable())
+			stage2:add(stage2transfer)
+		self:add(stage2)
+		self:add(nn.CAddTable())
+	end
 
 end
+--[=[
+nn.Sequential {
+  [input -> (1) -> output]
+  (1): nn.Sequential {
+    [input -> (1) -> (2) -> (3) -> (4) -> output]
+    (1): nn.ConcatTable {
+      input
+        |`-> (1): nn.Identity
+        |`-> (2): nn.Sequential {
+        |      [input -> (1) -> (2) -> output]
+        |      (1): nn.Dropout(0.000000)
+        |      (2): nn.ConcatTable {
+        |        input
+        |          |`-> (1): nn.Sequential {
+        |          |      [input -> (1) -> (2) -> (3) -> (4) -> output]
+        |          |      (1): nn.Linear(3 -> 3)
+        |          |      (2): nn.AddConstant
+        |          |      (3): nn.Sigmoid
+        |          |      (4): nn.ConcatTable {
+        |          |        input
+        |          |          |`-> (1): nn.Identity
+        |          |          |`-> (2): nn.Sequential {
+        |          |          |      [input -> (1) -> (2) -> output]
+        |          |          |      (1): nn.MulConstant
+        |          |          |      (2): nn.AddConstant
+        |          |          |    }
+        |          |           ... -> output
+        |          |      }
+        |          |    }
+        |          |`-> (2): nn.Sequential {
+        |          |      [input -> (1) -> (2) -> output]
+        |          |      (1): nn.Linear(3 -> 3)
+        |          |      (2): nn.Tanh
+        |          |    }
+        |           ... -> output
+        |      }
+        |    }
+         ... -> output
+    }
+    (2): nn.FlattenTable
+    (3): nn.ConcatTable {
+      input
+        |`-> (1): nn.Sequential {
+        |      [input -> (1) -> (2) -> output]
+        |      (1): nn.ConcatTable {
+        |        input
+        |          |`-> (1): nn.SelectTable
+        |          |`-> (2): nn.SelectTable
+        |           ... -> output
+        |      }
+        |      (2): nn.CMulTable
+        |    }
+        |`-> (2): nn.Sequential {
+        |      [input -> (1) -> (2) -> output]
+        |      (1): nn.ConcatTable {
+        |        input
+        |          |`-> (1): nn.SelectTable
+        |          |`-> (2): nn.SelectTable
+        |           ... -> output
+        |      }
+        |      (2): nn.CMulTable
+        |    }
+         ... -> output
+    }
+    (4): nn.CAddTable
+  }
+}
+Checking 24 parameters
+Test 1: 1024/1024 failed!
+Test 2: 1024/1024 failed!
+Test 3: 1024/1024 failed!
+Test 4: 1024/1024 failed!
+Test 5: 1024/1024 failed!
+Test 6: 1024/1024 failed!
+Test 7: 1024/1024 failed!
+Test 8: 1024/1024 failed!
+Test 9: 1024/1024 failed!
+Test 10: 1024/1024 failed!
+Test 11: 1024/1024 failed!
+Test 12: 1024/1024 failed!
+Test 13: 1024/1024 failed!
+Test 14: 1024/1024 failed!
+Test 15: 1024/1024 failed!
+Test 16: 1024/1024 failed!
+]=]

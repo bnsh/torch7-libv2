@@ -37,13 +37,12 @@ end
 local function main(argv)
 	local numlayers = 3
 	local sz = 3
+	local bias = 0
 	local bb = nn.Sequential()
-	for i = 1,numlayers
-	do
-		bb:add(nn.HighwayLayer(sz,nn.Tanh(),-2,0.0))
-	end
+	bb:add(nn.HighwayLayer(numlayers, sz,nn.Tanh(),bias,0.0))
+	print(bb)
 
-	local yk = HighwayMLP.mlp(sz,numlayers,-2,nn.Tanh())
+	local yk = HighwayMLP.mlp(sz,numlayers,bias,nn.Tanh())
 
 	local bbp, bbg = bb:getParameters()
 	local ykp, ykg = yk:getParameters()
@@ -99,12 +98,17 @@ local function main(argv)
 		bbp:copy(params)
 		ykp:copy(params)
 		local iters = 1024
+		local rows = 1
 		local failure = 0
+
+		local bbout, ykout = nil, nil
+
 		for j = 1, iters
 		do
-			data = torch.randn(256, sz)
-			local bbout = bb:forward(data)
-			local ykout = bb:forward(data)
+			data = torch.randn(rows, sz)
+			bbout = bb:forward(data)
+			ykout = yk:forward(data)
+
 			local squareddeviations = torch.sum(torch.pow(torch.add(bbout, torch.mul(ykout,-1)),2))
 			if squareddeviations ~= 0
 			then
