@@ -79,7 +79,7 @@ end
 nn.Sequential {
   [input -> (1) -> output]
   (1): nn.Sequential {
-    [input -> (1) -> (2) -> (3) -> (4) -> output]
+    [input -> (1) -> (2) -> (3) -> (4) -> (5) -> (6) -> (7) -> (8) -> (9) -> (10) -> (11) -> (12) -> output]
     (1): nn.ConcatTable {
       input
         |`-> (1): nn.Identity
@@ -140,23 +140,215 @@ nn.Sequential {
          ... -> output
     }
     (4): nn.CAddTable
+    (5): nn.ConcatTable {
+      input
+        |`-> (1): nn.Identity
+        |`-> (2): nn.Sequential {
+        |      [input -> (1) -> (2) -> output]
+        |      (1): nn.Dropout(0.000000)
+        |      (2): nn.ConcatTable {
+        |        input
+        |          |`-> (1): nn.Sequential {
+        |          |      [input -> (1) -> (2) -> (3) -> (4) -> output]
+        |          |      (1): nn.Linear(3 -> 3)
+        |          |      (2): nn.AddConstant
+        |          |      (3): nn.Sigmoid
+        |          |      (4): nn.ConcatTable {
+        |          |        input
+        |          |          |`-> (1): nn.Identity
+        |          |          |`-> (2): nn.Sequential {
+        |          |          |      [input -> (1) -> (2) -> output]
+        |          |          |      (1): nn.MulConstant
+        |          |          |      (2): nn.AddConstant
+        |          |          |    }
+        |          |           ... -> output
+        |          |      }
+        |          |    }
+        |          |`-> (2): nn.Sequential {
+        |          |      [input -> (1) -> (2) -> output]
+        |          |      (1): nn.Linear(3 -> 3)
+        |          |      (2): nn.Tanh
+        |          |    }
+        |           ... -> output
+        |      }
+        |    }
+         ... -> output
+    }
+    (6): nn.FlattenTable
+    (7): nn.ConcatTable {
+      input
+        |`-> (1): nn.Sequential {
+        |      [input -> (1) -> (2) -> output]
+        |      (1): nn.ConcatTable {
+        |        input
+        |          |`-> (1): nn.SelectTable
+        |          |`-> (2): nn.SelectTable
+        |           ... -> output
+        |      }
+        |      (2): nn.CMulTable
+        |    }
+        |`-> (2): nn.Sequential {
+        |      [input -> (1) -> (2) -> output]
+        |      (1): nn.ConcatTable {
+        |        input
+        |          |`-> (1): nn.SelectTable
+        |          |`-> (2): nn.SelectTable
+        |           ... -> output
+        |      }
+        |      (2): nn.CMulTable
+        |    }
+         ... -> output
+    }
+    (8): nn.CAddTable
+    (9): nn.ConcatTable {
+      input
+        |`-> (1): nn.Identity
+        |`-> (2): nn.Sequential {
+        |      [input -> (1) -> (2) -> output]
+        |      (1): nn.Dropout(0.000000)
+        |      (2): nn.ConcatTable {
+        |        input
+        |          |`-> (1): nn.Sequential {
+        |          |      [input -> (1) -> (2) -> (3) -> (4) -> output]
+        |          |      (1): nn.Linear(3 -> 3)
+        |          |      (2): nn.AddConstant
+        |          |      (3): nn.Sigmoid
+        |          |      (4): nn.ConcatTable {
+        |          |        input
+        |          |          |`-> (1): nn.Identity
+        |          |          |`-> (2): nn.Sequential {
+        |          |          |      [input -> (1) -> (2) -> output]
+        |          |          |      (1): nn.MulConstant
+        |          |          |      (2): nn.AddConstant
+        |          |          |    }
+        |          |           ... -> output
+        |          |      }
+        |          |    }
+        |          |`-> (2): nn.Sequential {
+        |          |      [input -> (1) -> (2) -> output]
+        |          |      (1): nn.Linear(3 -> 3)
+        |          |      (2): nn.Tanh
+        |          |    }
+        |           ... -> output
+        |      }
+        |    }
+         ... -> output
+    }
+    (10): nn.FlattenTable
+    (11): nn.ConcatTable {
+      input
+        |`-> (1): nn.Sequential {
+        |      [input -> (1) -> (2) -> output]
+        |      (1): nn.ConcatTable {
+        |        input
+        |          |`-> (1): nn.SelectTable
+        |          |`-> (2): nn.SelectTable
+        |           ... -> output
+        |      }
+        |      (2): nn.CMulTable
+        |    }
+        |`-> (2): nn.Sequential {
+        |      [input -> (1) -> (2) -> output]
+        |      (1): nn.ConcatTable {
+        |        input
+        |          |`-> (1): nn.SelectTable
+        |          |`-> (2): nn.SelectTable
+        |           ... -> output
+        |      }
+        |      (2): nn.CMulTable
+        |    }
+         ... -> output
+    }
+    (12): nn.CAddTable
   }
 }
-Checking 24 parameters
-Test 1: 1024/1024 failed!
-Test 2: 1024/1024 failed!
-Test 3: 1024/1024 failed!
-Test 4: 1024/1024 failed!
-Test 5: 1024/1024 failed!
-Test 6: 1024/1024 failed!
-Test 7: 1024/1024 failed!
-Test 8: 1024/1024 failed!
-Test 9: 1024/1024 failed!
-Test 10: 1024/1024 failed!
-Test 11: 1024/1024 failed!
-Test 12: 1024/1024 failed!
-Test 13: 1024/1024 failed!
-Test 14: 1024/1024 failed!
-Test 15: 1024/1024 failed!
-Test 16: 1024/1024 failed!
+Checking 72 parameters
+parameter 1 check.
+parameter 2 check.
+parameter 3 check.
+parameter 4 check.
+parameter 5 check.
+parameter 6 check.
+parameter 7 check.
+parameter 8 check.
+parameter 9 check.
+parameter 10 matches multiple parameters on yoon kim's version: [10, 34, 58]
+parameter 11 matches multiple parameters on yoon kim's version: [11, 35, 59]
+parameter 12 matches multiple parameters on yoon kim's version: [12, 36, 60]
+parameter 13 check.
+parameter 14 check.
+parameter 15 check.
+parameter 16 check.
+parameter 17 check.
+parameter 18 check.
+parameter 19 check.
+parameter 20 check.
+parameter 21 check.
+parameter 22 check.
+parameter 23 check.
+parameter 24 check.
+parameter 25 check.
+parameter 26 check.
+parameter 27 check.
+parameter 28 check.
+parameter 29 check.
+parameter 30 check.
+parameter 31 check.
+parameter 32 check.
+parameter 33 check.
+parameter 34 matches multiple parameters on yoon kim's version: [10, 34, 58]
+parameter 35 matches multiple parameters on yoon kim's version: [11, 35, 59]
+parameter 36 matches multiple parameters on yoon kim's version: [12, 36, 60]
+parameter 37 check.
+parameter 38 check.
+parameter 39 check.
+parameter 40 check.
+parameter 41 check.
+parameter 42 check.
+parameter 43 check.
+parameter 44 check.
+parameter 45 check.
+parameter 46 check.
+parameter 47 check.
+parameter 48 check.
+parameter 49 check.
+parameter 50 check.
+parameter 51 check.
+parameter 52 check.
+parameter 53 check.
+parameter 54 check.
+parameter 55 check.
+parameter 56 check.
+parameter 57 check.
+parameter 58 matches multiple parameters on yoon kim's version: [10, 34, 58]
+parameter 59 matches multiple parameters on yoon kim's version: [11, 35, 59]
+parameter 60 matches multiple parameters on yoon kim's version: [12, 36, 60]
+parameter 61 check.
+parameter 62 check.
+parameter 63 check.
+parameter 64 check.
+parameter 65 check.
+parameter 66 check.
+parameter 67 check.
+parameter 68 check.
+parameter 69 check.
+parameter 70 check.
+parameter 71 check.
+parameter 72 check.
+Test 1: success.
+Test 2: success.
+Test 3: success.
+Test 4: success.
+Test 5: success.
+Test 6: success.
+Test 7: success.
+Test 8: success.
+Test 9: success.
+Test 10: success.
+Test 11: success.
+Test 12: success.
+Test 13: success.
+Test 14: success.
+Test 15: success.
+Test 16: success.
 ]=]
