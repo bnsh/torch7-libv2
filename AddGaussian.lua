@@ -12,7 +12,7 @@ function AddGaussian:updateOutput(input)
 	self.output:resizeAs(input)
 	self.output:copy(input)
 	if self.train then
-		self.output:add(torch.randn(input:size())*self.sigma+self.mean)
+		self.output:add(torch.randn(input:size()):typeAs(input)*self.sigma+self.mean)
 	end
 	return self.output
 end
