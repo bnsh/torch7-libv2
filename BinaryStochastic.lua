@@ -13,14 +13,23 @@ function BinaryStochastic:updateOutput(input)
 -- No matter what, copy the rawoutput.
 	self.rawoutput:copy(self.output)
 
-	if not self.train
+	if self.train
 	then
-		self.output:mul(2):floor()
-		self.output[self.output:lt(0)] = 0
-		self.output[self.output:gt(1)] = 1
-	else
-		-- Pick a random value.
+--[=[
 		self.output:apply(function (x) return torch.bernoulli(x) end)
+]=]
+		-- Pick a random value.
+		self.cpubuff1 = self.cpubuff1 or torch.DoubleTensor()
+		self.cpubuff1:resize(input:size())
+		self.cpubuff2 = self.cpubuff2 or torch.DoubleTensor()
+		self.cpubuff2:resize(input:size())
+
+		self.cpubuff1:copy(self.rawoutput)
+		self.cpubuff2:bernoulli(self.cpubuff1)
+
+		self.output:copy(self.cpubuff2)
+	else
+		self.output:mul(2):floor()
 	end
 	return self.output
 end
