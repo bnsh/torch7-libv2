@@ -29,7 +29,7 @@ function BinaryStochastic:updateOutput(input)
 
 		self.output:copy(self.cpubuff2)
 	else
--- Why the scale from 0..1 to 0.1..0.9? Because, if we simply multiplied by 2
+-- Why the scale from 0..1 to 0.1..1.9? Because, if we simply multiplied by 2
 -- we _could_ get 0..2 (_if_ the input was _actually_ 1 (finite numeric precision and all that)
 -- So, instead, we scale 0..1 to 0.1..1.9 and just floor that.
 		self.output:mul(1.8):add(0.1):floor()
