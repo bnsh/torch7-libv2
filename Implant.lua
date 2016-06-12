@@ -12,6 +12,7 @@ So.
 
 	(Of course, this is precisely what we want, and is the point of this module to begin
 	with.)
+	See Extract.lua and Nullable.lua too.
 ]=]
 
 function Implant:__init()

@@ -5,7 +5,7 @@ So.
 	Our input is a table {indicators, data}
 	This module will simply remove any entries in data for which their
 	indicator is > 0.5
-	See Implant.lua. This module is meant to be used something like this:
+	See Implant.lua, Nullable.Lua. This module is meant to be used something like this:
 		mlp = nn.Sequential()
 		slab1 = nn.ConcatTable()
 		slab1:add(nn.SelectTable(1))
@@ -20,6 +20,8 @@ So.
 		mlp:add(slab2)
 
 		mlp:add(nn.Implant())
+
+	(or more conveniently: mlp = Nullable(fancyneural network module here!))
 
 	mlp:forward({torch.ByteTensor(sz):bernoulli(), torch.randn(sz, 2, 3)})
 ]=]
