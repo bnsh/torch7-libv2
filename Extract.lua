@@ -61,6 +61,9 @@ function Extract:updateGradInput(input, gradOutput)
 		}
 
 		self.gradInput[2]:resizeAs(data):zero()
+		if torch.type(gradOutput) == "torch.CudaTensor" then
+			expandedindicators = expandedindicators:cuda()
+		end
 		self.gradInput[2]:maskedCopy(expandedindicators, gradOutput)
 	else
 		self.gradInput = self.gradInput or {
