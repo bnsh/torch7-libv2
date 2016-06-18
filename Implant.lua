@@ -23,27 +23,46 @@ end
 function Implant:updateOutput(input)
 	local indicators = input[1]
 	local data = input[2]
-	local indicatorsz = torch.ones(data:dim())
-	indicatorsz[1] = indicators:size(1)
 	local outputsz = data:size()
-	outputsz[1] = indicators:size(1)
--- What should the output sz be? It should be indicators:size(1) but data:size(2-)
-	local expandedindicators = indicators:gt(0.5):resize(torch.LongStorage(indicatorsz:totable())):expand(outputsz)
+	if indicators:any() then
+		local indicatorsz = torch.ones(data:dim())
+		indicatorsz[1] = indicators:size(1)
+		outputsz[1] = indicators:size(1)
+	-- What should the output sz be? It should be indicators:size(1) but data:size(2-)
+		local expandedindicators = indicators:gt(0.5):resize(torch.LongStorage(indicatorsz:totable())):expand(outputsz)
+		if torch.type(data) == "torch.CudaTensor" then
+			expandedindicators = expandedindicators:cuda()
+		end
 
--- Now, we have to put back the rows that we took out.
-	self.output = self.output or torch.Tensor(0):typeAs(data)
+	-- Now, we have to put back the rows that we took out.
+		self.output = self.output or torch.Tensor(0):typeAs(data)
 
-	self.output:resize(torch.LongStorage(outputsz:totable())):zero()
-	self.output:maskedCopy(expandedindicators, data)
+		self.output:resize(torch.LongStorage(outputsz:totable())):zero()
+		self.output:maskedCopy(expandedindicators, data)
+	else
+		outputsz[1] = indicators:size(1)
+		self.output = self.output or torch.Tensor(0):typeAs(data)
+		self.output:resize(outputsz):zero()
+	end
 	return self.output
 end
 
 function Implant:updateGradInput(input, gradOutput)
 	local indicators = input[1]
+	local data = input[2]
+	local outputsz = data:size()
 
-	self.gradInput = {
-		torch.zeros(indicators:size()):typeAs(indicators),
-		gradOutput:index(1,torch.range(1,indicators:numel())[indicators:gt(0.5)]:long())
-	}
+	if indicators:any() then
+		self.gradInput = {
+			torch.zeros(indicators:size()):typeAs(indicators),
+			gradOutput:index(1,torch.range(1,indicators:numel())[indicators:gt(0.5)]:long())
+		}
+	else
+		outputsz[1] = 1
+		self.gradInput = {
+			torch.zeros(indicators:size()):typeAs(indicators),
+			torch.zeros(outputsz):typeAs(gradOutput)
+		}
+	end
 	return self.gradInput
 end

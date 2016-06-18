@@ -1,3 +1,6 @@
+require "Extract"
+require "Implant"
+
 local Nullable, parent = torch.class('nn.Nullable', 'nn.Sequential')
 
 --[=[
