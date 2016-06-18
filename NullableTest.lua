@@ -13,7 +13,20 @@ function singlerun(samples, indim, outdim)
 
 	local data = torch.randn(samples, indim)
 	local target = torch.randn(samples, outdim)
-	local indicators = torch.ByteTensor(samples):bernoulli()
+	local indicators = torch.ByteTensor(samples):zero()
+	local mode = nil
+	local rnd = math.random()
+	if rnd < 1/3 then
+		mode = "zero"
+		indicators:zero()
+	elseif rnd < 2/3 then
+		mode = "bernoulli"
+		indicators:bernoulli()
+	else
+		mode = "all"
+		indicators:zero()
+		indicators:add(1)
+	end
 	local epsilon = 1e-3
 
 	local output = mlp:forward({indicators, data})
@@ -41,13 +54,13 @@ function singlerun(samples, indim, outdim)
 	end
 	local err = (gradInput[2] - empiricalGradInput)
 	local rmserr = math.sqrt(err:pow(2):sum())
-	return rmserr
+	return rmserr, mode
 end
 
 local epsilon = 1e-8
 for j = 1,1024 do
-	rmserr = singlerun(128, 10, 20)
-	print(string.format("Test %04d: rms=%.7g %s", j, rmserr, (rmserr < epsilon) and "PASS" or "FAIL!"))
+	rmserr, mode = singlerun(128, 10, 20)
+	print(string.format("Test %04d: %s: rms=%.7g %s", j, (rmserr < epsilon) and "PASS" or "FAIL!", rmserr, mode))
 	assert(rmserr < epsilon)
 end
 
