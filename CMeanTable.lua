@@ -51,7 +51,7 @@ function CMeanTable:updateOutput(input)
 	sz[1] = denominators:size(1)
 	denominators = denominators:reshape(sz)
 
-	self.output:cdiv(denominators:expandAs(self.output))
+	self.output:cdiv(denominators:expandAs(self.output):typeAs(self.output))
 
 	return self.output
 end
@@ -68,7 +68,7 @@ function CMeanTable:updateGradInput(input, gradOutput)
 		sz[1] = denominators:size(1)
 		denominators = denominators:reshape(sz)
 
-		self.gradInput[i]:cdiv(denominators:expandAs(self.gradInput[i]))
+		self.gradInput[i]:cdiv(denominators:expandAs(self.gradInput[i]):typeAs(self.gradInput[i]))
 
 -- Now, we have to zero out any zero vectors in our input.
 		local zeros = findrowswithdata(input[i]):eq(0):byte()
