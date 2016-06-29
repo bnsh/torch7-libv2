@@ -47,5 +47,5 @@ function SplitTensor:updateGradInput(input, gradOutput)
 end
 
 function SplitTensor:__tostring__()
-	return string.format("%s(%d,%d,{...})", self.splitdim, self.ndim)
+	return string.format("%s(%d,%d,{...})", torch.type(self), self.splitdim, self.ndim)
 end
