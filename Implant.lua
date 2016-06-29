@@ -29,9 +29,9 @@ function Implant:updateOutput(input)
 	self.output = self.output or torch.Tensor(0):typeAs(data)
 	self.output:resize(torch.LongStorage(outputsz:totable())):zero()
 
-	if indicators:any() then
+	if indicators:gt(0.5):any() then
 	-- What should the output sz be? It should be indicators:size(1) but data:size(2-)
-		local indices = torch.range(1, indicators:numel())[indicators:gt(0.5)]:long()
+		local indices = torch.range(1, indicators:numel())[indicators:gt(0.5):byte()]:long()
 		self.output:indexCopy(1, indices, data)
 	end
 	return self.output
@@ -47,8 +47,8 @@ function Implant:updateGradInput(input, gradOutput)
 		torch.Tensor(0):typeAs(data)
 	}
 
-	if indicators:any() then
-		local rv = gradOutput:index(1,torch.range(1,indicators:numel())[indicators:gt(0.5)]:long())
+	if indicators:gt(0.5):any() then
+		local rv = gradOutput:index(1,torch.range(1,indicators:numel())[indicators:gt(0.5):byte()]:long())
 		self.gradInput[1]:resizeAs(indicators):zero()
 		self.gradInput[2]:resizeAs(rv)
 		self.gradInput[2]:copy(rv)

@@ -12,7 +12,7 @@ local function findrowswithdata(tensor)
 	local m = tensor:size()[1]
 	local n = torch.LongTensor(tensor:size():totable()):prod() / m
 	local cpy = tensor:reshape(m,n)
-	local nonzero = cpy:sum(2):ne(0)
+	local nonzero = cpy:sum(2):ne(0):byte() -- We don't want this to be a CudaTensor
 	return nonzero
 end
 
@@ -20,9 +20,9 @@ local function computeDenominators(data)
 	local denominators = nil
 	table.foreachi(data, function (key, value)
 		if denominators == nil then
-			denominators = findrowswithdata(value):double()
+			denominators = findrowswithdata(value)
 		else
-			denominators:add(findrowswithdata(value):double())
+			denominators:add(findrowswithdata(value))
 		end
 	end)
 	return denominators
@@ -71,7 +71,7 @@ function CMeanTable:updateGradInput(input, gradOutput)
 		self.gradInput[i]:cdiv(denominators:expandAs(self.gradInput[i]))
 
 -- Now, we have to zero out any zero vectors in our input.
-		local zeros = findrowswithdata(input[i]):eq(0)
+		local zeros = findrowswithdata(input[i]):eq(0):byte()
 		if zeros:any() then
 			local indices = torch.range(1, zeros:size(1)):long()[zeros]
 			self.gradInput[i]:indexFill(1, indices, 0)

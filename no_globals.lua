@@ -6,12 +6,18 @@ function no_globals(main)
 	do
 		before[k] = true
 	end
-	main(arg)
-	for k, v in pairs(_G)
-	do
-		if before[k] == nil
-		then
-			io.stderr:write(string.format("GLOBAL LEAK! WTF IS '%s'?! LITTER BUG!\n", k))
+	local function verify()
+		local problems = 0
+		for k, v in pairs(_G)
+		do
+			if before[k] == nil
+			then
+				io.stderr:write(string.format("GLOBAL LEAK! WTF IS '%s'?! LITTER BUG!\n", k))
+				problems = problems + 1
+			end
 		end
+		return problems
 	end
+	main(arg, verify)
+	assert(0 == verify())
 end

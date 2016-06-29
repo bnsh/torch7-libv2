@@ -16,7 +16,7 @@ function Nullable:__init(realmodule)
 	slab1:add(nn.Extract())
 	self:add(slab1)
 
-	slab2 = nn.ParallelTable()
+	local slab2 = nn.ParallelTable()
 	slab2:add(nn.Identity())
 	slab2:add(realmodule)
 

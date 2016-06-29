@@ -39,8 +39,8 @@ function Extract:updateOutput(input)
 	self.output = self.output or torch.Tensor(0):typeAs(data)
 
 	local rv = data:index(1, torch.LongTensor({1}))
-	if indicators:any() then
-		local indices = torch.range(1, indicators:numel())[indicators:gt(0.5)]:long()
+	if indicators:gt(0.5):any() then
+		local indices = torch.range(1, indicators:numel())[indicators:gt(0.5):byte()]:long()
 		rv = data:index(1,indices)
 	end
 	self.output:resizeAs(rv)
@@ -61,8 +61,8 @@ function Extract:updateGradInput(input, gradOutput)
 	self.gradInput[1]:resizeAs(indicators):zero()
 	self.gradInput[2]:resizeAs(data):zero()
 
-	if indicators:any() then
-		local indices = torch.range(1,indicators:numel())[indicators:gt(0.5)]:long()
+	if indicators:gt(0.5):any() then
+		local indices = torch.range(1,indicators:numel())[indicators:gt(0.5):byte()]:long()
 		self.gradInput[2]:indexCopy(1, indices, gradOutput)
 	end
 	return self.gradInput

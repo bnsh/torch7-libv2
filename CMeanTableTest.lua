@@ -1,5 +1,6 @@
 #! /usr/local/torch/install/bin/th
 
+require "cutorch"
 require "nn"
 require "CMeanTable"
 
