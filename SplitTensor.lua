@@ -27,10 +27,14 @@ function SplitTensor:__init(splitdim, ndim, indices)
 end
 
 function SplitTensor:updateOutput(input)
-	self.output = { }
+	self.output = self.output or { }
+	while #self.output > #self.indices do table.remove(self.output) end
 	local idx = self.splitdim + input:dim() - self.ndim
 	for i, rng in ipairs(self.indices) do
-		self.output[i] = input:index(idx, rng)
+		self.output[i] = self.output[i] or torch.Tensor():typeAs(input)
+		local v = input:index(idx, rng)
+		self.output[i]:resizeAs(v)
+		self.output[i]:copy(input:index(idx, rng))
 	end
 	return self.output
 end
