@@ -50,8 +50,7 @@ function Implant:updateGradInput(input, gradOutput)
 	if indicators:gt(0.5):any() then
 		local rv = gradOutput:index(1,torch.range(1,indicators:numel())[indicators:gt(0.5):byte()]:long())
 		self.gradInput[1]:resizeAs(indicators):zero()
-		self.gradInput[2]:resizeAs(rv)
-		self.gradInput[2]:copy(rv)
+		self.gradInput[2]:resizeAs(rv):copy(rv)
 	else
 		outputsz[1] = 1
 		self.gradInput[1]:resizeAs(indicators):zero()
