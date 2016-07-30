@@ -25,15 +25,26 @@ local function verify(batchsz, sz)
 
 			input[{i,j}] = pristine + epsilon
 			local errp1 = criteria:forward(censor:forward(input), target)
+			assert(errp1 == errp1)
 
 			input[{i,j}] = pristine - epsilon
 			local errm1 = criteria:forward(censor:forward(input), target)
+			assert(errm1 == errm1)
 
-			actualGradInput[{i,j}] = (errp1 - errm1) / (2 * epsilon)
+			local diff = errp1 - errm1
+-- Let's make a normally bad assumption. inf-inf = 0
+			if errp1 == errm1 and (errp1 == math.huge) or (errp1 == -math.huge) then
+				diff = 0
+			end
+
+			actualGradInput[{i,j}] = diff / (2 * epsilon)
 
 			input[{i,j}] = pristine
 		end
 	end
+
+	assert(not purportedGradInput:ne(purportedGradInput):any())
+	assert(not actualGradInput:ne(actualGradInput):any())
 
 	local errsquared = math.sqrt((purportedGradInput - actualGradInput:cuda()):pow(2):mean())
 	return errsquared

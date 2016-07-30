@@ -14,7 +14,12 @@ the LogSoftMax:
 and now, you'll have sensible results for p(x=aardvark|x is _NOT_ baseball)
 
 So, we're *NOT* zeroing values out. We're making them very very negative. Because
-censor is designed to work _specifically_ with LogSoftMax!
+censor is designed to work _specifically_ with LogSoftMax! 
+
+Not anymore. Now, you can use replacewith to replace it with whatever you like.
+if you replace with -math.huge, it behaves the way you expect for logsoftmax. Or
+you could replace with 0 to deal with softmax. Or you could replace with 1729 because
+you like 1729.
 ]=]
 
 function Censor:__init(censormask, replacewith)
@@ -40,7 +45,7 @@ function Censor:updateOutput(input)
 	addthis = addthis:typeAs(input)
 	local mn = expanded:min()
 	if self.replacewith == nil then
-		addthis[expanded:eq(0)] = math.min(-1000, math.floor(100*mn-10))
+		addthis[expanded:eq(0)] = -math.huge
 	else
 		addthis[expanded:eq(0)] = replacewith
 	end
@@ -54,6 +59,6 @@ function Censor:updateGradInput(input, gradOutput)
 	self.gradInput:copy(gradOutput)
 
 	local expanded = self.censormask:typeAs(input):expandAs(input)
-	self.gradInput:cmul(expanded)
+	self.gradInput[expanded:eq(0)] = 0
 	return self.gradInput
 end
