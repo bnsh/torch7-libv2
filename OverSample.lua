@@ -34,16 +34,16 @@ assert(not input:ne(input):any())
 		self.output[i]:resize(batchsz, channels, patchszy, patchszx):zero()
 	end
 	for j = 1, batchsz do
-		self.output[ 1][{j,{},{},{}}]:copy(image.crop(input[j], "tl", patchszx, patchszy))
-		self.output[ 2][{j,{},{},{}}]:copy(image.crop(input[j], "tr", patchszx, patchszy))
-		self.output[ 3][{j,{},{},{}}]:copy(image.crop(input[j], "bl", patchszx, patchszy))
-		self.output[ 4][{j,{},{},{}}]:copy(image.crop(input[j], "br", patchszx, patchszy))
+		self.output[ 1][{j,{},{},{}}]:copy(image.crop(input[j]:double(), "tl", patchszx, patchszy))
+		self.output[ 2][{j,{},{},{}}]:copy(image.crop(input[j]:double(), "tr", patchszx, patchszy))
+		self.output[ 3][{j,{},{},{}}]:copy(image.crop(input[j]:double(), "bl", patchszx, patchszy))
+		self.output[ 4][{j,{},{},{}}]:copy(image.crop(input[j]:double(), "br", patchszx, patchszy))
 -- So, center seems to crop like so:
 -- start = 1+math.floor((sz-patchsz)/2)
 -- crop {start, start+patchsz-1}
-		self.output[ 5][{j,{},{},{}}]:copy(image.crop(input[j],  "c", patchszx, patchszy))
+		self.output[ 5][{j,{},{},{}}]:copy(image.crop(input[j]:double(),  "c", patchszx, patchszy))
 		for k = 6, 10 do
-			self.output[ k][{j,{},{},{}}]:copy(image.hflip(self.output[k-5][j]))
+			self.output[ k][{j,{},{},{}}]:copy(image.hflip(self.output[k-5][j]:double()))
 		end
 	end
 	for i = 1, 10 do
@@ -76,13 +76,13 @@ function OverSample:updateGradInput(input, gradOutput)
 		self.gradInput[{j,{},{starty,starty+patchszy-1},{startx,startx+patchszx-1}}]:add(gradOutput[5][j])
 
 -- Now for the reverses.
-		self.gradInput[{j,{},{1,patchszy},{1,patchszx}}]:add(image.hflip(gradOutput[1][j]))
-		self.gradInput[{j,{},{1,patchszy},{szx+1-patchszx,szx}}]:add(image.hflip(gradOutput[2][j]))
-		self.gradInput[{j,{},{szy+1-patchszy, szy},{1,patchszx}}]:add(image.hflip(gradOutput[3][j]))
-		self.gradInput[{j,{},{szy+1-patchszy, szy},{szx+1-patchszx,szx}}]:add(image.hflip(gradOutput[4][j]))
+		self.gradInput[{j,{},{1,patchszy},{1,patchszx}}]:add(image.hflip(gradOutput[1][j]:double()):cuda())
+		self.gradInput[{j,{},{1,patchszy},{szx+1-patchszx,szx}}]:add(image.hflip(gradOutput[2][j]:double()):cuda())
+		self.gradInput[{j,{},{szy+1-patchszy, szy},{1,patchszx}}]:add(image.hflip(gradOutput[3][j]:double()):cuda())
+		self.gradInput[{j,{},{szy+1-patchszy, szy},{szx+1-patchszx,szx}}]:add(image.hflip(gradOutput[4][j]:double()):cuda())
 		local startx = 1+math.floor((szx - patchszx)/2)
 		local starty = 1+math.floor((szy - patchszy)/2)
-		self.gradInput[{j,{},{starty,starty+patchszy-1},{startx,startx+patchszx-1}}]:add(image.hflip(gradOutput[5][j]))
+		self.gradInput[{j,{},{starty,starty+patchszy-1},{startx,startx+patchszx-1}}]:add(image.hflip(gradOutput[5][j]:double()):cuda())
 	end
 
 	return self.gradInput
