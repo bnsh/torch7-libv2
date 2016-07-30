@@ -5,17 +5,17 @@ require "Censor"
 require "fprintf"
 
 local function verify(batchsz, sz)
-	local mask = torch.ByteTensor(1, sz):bernoulli():cuda()
-	local censor = nn.Censor(mask):cuda()
-	local input = torch.randn(batchsz, sz):cuda()
-	local target = torch.randn(batchsz, sz):cuda()
-	local criteria = nn.MSECriterion():cuda()
+	local mask = torch.ByteTensor(1, sz):bernoulli()
+	local censor = nn.Censor(mask)
+	local input = torch.randn(batchsz, sz)
+	local target = torch.randn(batchsz, sz)
+	local criteria = nn.MSECriterion()
 	
 	local output = censor:forward(input)
 	local err = criteria:forward(output, target)
 	local gradOutput = criteria:backward(output, target)
 	local purportedGradInput = censor:backward(input, gradOutput)
-	local actualGradInput = torch.zeros(batchsz, sz):cuda()
+	local actualGradInput = torch.zeros(batchsz, sz)
 	local epsilon = 1e-3
 
 	-- Great. Now, let's compute it with finite differences.
