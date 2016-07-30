@@ -17,7 +17,7 @@ So, we're *NOT* zeroing values out. We're making them very very negative. Becaus
 censor is designed to work _specifically_ with LogSoftMax!
 ]=]
 
-function Censor:__init(censormask)
+function Censor:__init(censormask, replacewith)
 	parent.__init(self)
 	self.gradInput = nil
 	self.output = nil
@@ -27,6 +27,7 @@ function Censor:__init(censormask)
 	assert(censormask:eq(0):add(censormask:eq(1)):sum() == censormask:size(2))
 
 	self.censormask = censormask
+	self.replacewith = replacewith
 end
 
 function Censor:updateOutput(input)
@@ -38,7 +39,11 @@ function Censor:updateOutput(input)
 	local addthis = torch.zeros(expanded:size())
 	addthis = addthis:typeAs(input)
 	local mn = expanded:min()
-	addthis[expanded:eq(0)] = math.min(-1000, math.floor(100*mn-10))
+	if self.replacewith == nil then
+		addthis[expanded:eq(0)] = math.min(-1000, math.floor(100*mn-10))
+	else
+		addthis[expanded:eq(0)] = replacewith
+	end
 	self.output:cmul(expanded):add(addthis)
 	return self.output
 end
