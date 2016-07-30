@@ -35,6 +35,8 @@ function Censor:updateOutput(input)
 	self.output:copy(input)
 
 	local expanded = self.censortable:typeAs(input):expandAs(input)
+	local addthis = torch.zeros(expanded:size())
+	addthis[expanded:eq(0)] = -1000
 	self.output:cmul(expanded):add(addthis)
 	return self.output
 end
