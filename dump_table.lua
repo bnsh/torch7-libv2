@@ -35,7 +35,7 @@ function dump_table(fh, indent, t, dump_tensors)
 		for k, v in pairs(t) do
 			if first then fprintf(fh, "{") else fprintf(fh, ",") end
 			fprintf(fh, "\n%s	%s: ", indent, tostring(k))
-			dump_table(fh, indent.."\t", v)
+			dump_table(fh, indent.."\t", v, dump_tensors)
 			first = false
 		end
 		if first then
