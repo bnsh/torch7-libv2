@@ -11,6 +11,7 @@ function Random:__init(...)
 	self.gradInput = nil
 	self.output = nil
 	self.args = {...}
+	self.train = true
 end
 
 function Random:updateOutput(input)
@@ -19,7 +20,7 @@ function Random:updateOutput(input)
 	for i, k in ipairs(self.args) do table.insert(sz, k) end
 	self.output:resize(unpack(sz))
 	if self.train then
-		self.output:copy(torch.randn(unpack(sz)))
+		self.output:normal() -- This is badly named. But, this generates random normally distributed values, it is _not_ doing the "norm" of the vector.
 	else
 		self.output:zero()
 	end

@@ -98,18 +98,20 @@ static map<string, deque<pair<double, double> > > timinginfo;
 
 void profiler_hook(lua_State *L, lua_Debug *ar) {
 	lua_getinfo(L, "nSlu", ar);
-	profile_info p(ar);
-	if (ar->event == LUA_HOOKCALL) callstack.push(p);
-	else if (ar->event == LUA_HOOKRET) {
-		while (!callstack.empty()) {
-			const profile_info& top = callstack.top();
-			timinginfo[top.id()].push_back(pair<double, double>(top.tod(), p.tod()));
-			callstack.pop();
+	if (ar->source && (0 != strncmp(ar->source, "=[C]", strlen("=[C]")))) {
+		profile_info p(ar);
+		if (ar->event == LUA_HOOKCALL) callstack.push(p);
+		else if (ar->event == LUA_HOOKRET) {
+			while (!callstack.empty()) {
+				const profile_info& top = callstack.top();
+				timinginfo[top.id()].push_back(pair<double, double>(top.tod(), p.tod()));
+				callstack.pop();
 
-			if (top.id() == p.id()) break;
+				if (top.id() == p.id()) break;
+			}
 		}
+		else p.dump(stderr);
 	}
-	else p.dump(stderr);
 }
 
 static const char *outputfn = NULL;

@@ -15,14 +15,16 @@ So.
 	See Extract.lua and Nullable.lua too.
 
 	Let's take an initializer filler. If it's not nil, then we'll use that to fill the
-	output initially.
+	output initially. Mostly, the idea of the filler is for image inputs.
+	If the image is null, I want to pass a "static" image, random noise, basically,
+	so that the network doesn't think 0's are somehow significant, and _rely_ on those.
 ]=]
 
 function Implant:__init(filler)
 	parent.__init(self)
 	self.output = nil
 	self.gradInput = nil
-	self.filler = filler or function (tensor)
+	self.filler = filler or function (training, tensor)
 		tensor:zero()
 	end
 end
@@ -34,7 +36,7 @@ function Implant:updateOutput(input)
 
 	self.output = self.output or torch.Tensor(0):typeAs(data)
 	self.output:resize(torch.LongStorage(outputsz:totable()))
-	self.filler(self.output)
+	self.filler(self.train, self.output)
 
 	if indicators:gt(0.5):any() then
 	-- What should the output sz be? It should be indicators:size(1) but data:size(2-)

@@ -8,6 +8,7 @@ LIB_SRCS=\
 	simpletest_lua.C \
 	tfidf_lua.C \
 	timehires_lua.C \
+	x21profile_lua.C \
 
 LIB_OBJS=$(LIB_SRCS:C=o)
 
@@ -40,6 +41,7 @@ BINS=\
 	simpletest.so \
 	tfidf.so \
 	timehires.so \
+	x21profile.so \
 
 
 all: $(PROTOS_GENERATED) $(LEX_SRCS) $(OBJS) $(BINS)
@@ -71,6 +73,9 @@ tfidf.so: tfidf_lua.o
 	$(CC) -shared $(CFLAGS) -o $(@) $(^)
 
 timehires.so: timehires_lua.o
+	$(CC) -shared $(CFLAGS) -o $(@) $(^)
+
+x21profile.so: x21profile_lua.o
 	$(CC) -shared $(CFLAGS) -o $(@) $(^)
 
 %.o: %.C
