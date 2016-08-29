@@ -13,12 +13,18 @@ So.
 	(Of course, this is precisely what we want, and is the point of this module to begin
 	with.)
 	See Extract.lua and Nullable.lua too.
+
+	Let's take an initializer filler. If it's not nil, then we'll use that to fill the
+	output initially.
 ]=]
 
-function Implant:__init()
+function Implant:__init(filler)
 	parent.__init(self)
 	self.output = nil
 	self.gradInput = nil
+	self.filler = filler or function (tensor)
+		tensor:zero()
+	end
 end
 
 function Implant:updateOutput(input)
@@ -27,7 +33,8 @@ function Implant:updateOutput(input)
 	local outputsz = data:size(); outputsz[1] = indicators:size(1)
 
 	self.output = self.output or torch.Tensor(0):typeAs(data)
-	self.output:resize(torch.LongStorage(outputsz:totable())):zero()
+	self.output:resize(torch.LongStorage(outputsz:totable()))
+	self.filler(self.output)
 
 	if indicators:gt(0.5):any() then
 	-- What should the output sz be? It should be indicators:size(1) but data:size(2-)
