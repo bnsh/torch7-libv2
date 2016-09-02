@@ -29,30 +29,33 @@ local function random_distribution(samples, sz, datap)
 	return raw
 end
 
-local function single_iteration()
+local function single_iteration(zero)
 	local criterion = nn.DistKLDivCriterion()
 	criterion.sizeAverage = false
 	local samples = 1024
 	local sz = 16
 	local output = random_distribution(samples,sz, 1):log()
 	local target = random_distribution(samples,sz, 0.9)
+	if zero then
+		target:zero()
+	end
 	local expect = criterion:forward(output, target)
 	local actual = kldivergence(output, target):sum()
 
 	local err = math.sqrt((expect - actual) * (expect - actual))
-	return err
+	return err, expect, actual
 	
 end
 
 function testkldivergence()
-	for i = 1, 100 do
-		local err = single_iteration()
+	for i = 1, 1024 do
+		local err, expect, actual = single_iteration((i%2) == 0)
 
 		local status = "fail"
 		if err < 0.0001 then
 			status = "pass"
 		end
-		fprintf(io.stderr, "%5d: %s: %.7f\n", i, status, err)
+		fprintf(io.stderr, "%5d: %s: %.7f (%.7f, %.7f)\n", i, status, err, expect, actual)
 	end
 end
 
