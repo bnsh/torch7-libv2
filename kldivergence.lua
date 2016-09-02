@@ -14,7 +14,8 @@ Problems arise when target==0, of course.
 	local odds = torch.log(target) - output
 	local matrix = torch.cmul(target, odds)
 	local matrixv = matrix:view(-1)
-	local zeros = target:view(-1):lt(1e-10):eq(1):nonzero():squeeze()
+-- CudaByteTensor doesn't have "nonzero()" *sigh*
+	local zeros = target:view(-1):lt(1e-10):eq(1):byte():nonzero():squeeze()
 	if torch.type(zeros) == 'number' then
 		zeros = torch.LongTensor({zeros})
 	end
