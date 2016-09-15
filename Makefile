@@ -1,8 +1,9 @@
 CC=g++
-CFLAGS=-g3 -O2 -Wshadow -Wall -Werror -Wunused -I/usr/local/torch/install/include/ -I/usr/local/torch/install/include/TH -I/usr/local/torch/install/include/THC -I/usr/local/cuda/include/ -I. -I../nn-gpu/ -I../matrix-gpu/ -fPIC
-LIBS=
+CFLAGS=-g3 -O2 -Wshadow -Wall -Werror -Wunused -I/usr/local/torch/install/include/ -I/usr/local/torch/install/include/TH -I/usr/local/torch/install/include/THC -I/usr/local/torch/extra/cutorch/ -I/usr/local/cuda/include/ -I. -I../nn-gpu/ -I../matrix-gpu/ -fPIC
+LIBS=-L/usr/local/cuda/lib64 -lnppi
 
 LIB_SRCS=\
+	imageutils_lua.C \
 	nnio_lua.C \
 	normalize_lua.C \
 	simpletest_lua.C \
@@ -36,6 +37,7 @@ DEPS=$(join $(dir $(CANDIDATES)),$(addprefix .,$(notdir $(CANDIDATES))))
 
 
 BINS=\
+	imageutils.so \
 	nnio.so \
 	normalize.so \
 	simpletest.so \
@@ -59,6 +61,9 @@ checkin:
 
 clean:
 	/bin/rm -f $(OBJS) $(BINS) $(LEX_SRCS) $(UGH_SRCS) $(UGH_HDRS) $(PROTOS_GENERATED) *.o $(DEPS)
+
+imageutils.so: imageutils_lua.o
+	$(CC) -shared $(CFLAGS) -o $(@) $(^) $(LIBS)
 
 nnio.so: nnio_lua.o
 	$(CC) -shared $(CFLAGS) -o $(@) $(^)

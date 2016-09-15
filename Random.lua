@@ -6,21 +6,23 @@ local Random, parent = torch.class('nn.Random', 'nn.Module')
 -- In particular, images _might_ benefit from not always simply
 -- outputing "zeros"
 
-function Random:__init(...)
+function Random:__init(sz, m, sd)
 	parent.__init(self)
 	self.gradInput = nil
 	self.output = nil
-	self.args = {...}
+	self.sz = sz
 	self.train = true
+	self.m = m or 0
+	self.sd = sd or 1
 end
 
 function Random:updateOutput(input)
 	self.output = self.output or torch.Tensor(0):typeAs(input)
 	local sz = { input:size(1) }
-	for i, k in ipairs(self.args) do table.insert(sz, k) end
+	for i, k in ipairs(self.sz) do table.insert(sz, k) end
 	self.output:resize(unpack(sz))
 	if self.train then
-		self.output:normal() -- This is badly named. But, this generates random normally distributed values, it is _not_ doing the "norm" of the vector.
+		self.output:normal():mul(self.sd):add(self.m) -- This is badly named. But, this generates random normally distributed values, it is _not_ doing the "norm" of the vector.
 	else
 		self.output:zero()
 	end
