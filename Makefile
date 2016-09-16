@@ -1,6 +1,6 @@
 CC=g++
 CFLAGS=-g3 -O2 -Wshadow -Wall -Werror -Wunused -I/usr/local/torch/install/include/ -I/usr/local/torch/install/include/TH -I/usr/local/torch/install/include/THC -I/usr/local/torch/extra/cutorch/ -I/usr/local/cuda/include/ -I. -I../nn-gpu/ -I../matrix-gpu/ -fPIC
-LIBS=-L/usr/local/cuda/lib64 -lnppi
+LIBS=-L/usr/local/cuda/lib64 -lnppi -lnpps
 
 LIB_SRCS=\
 	imageutils_lua.C \
