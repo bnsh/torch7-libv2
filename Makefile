@@ -1,8 +1,10 @@
 CC=g++
-CFLAGS=-g3 -O2 -Wshadow -Wall -Werror -Wunused -I/usr/local/torch/install/include/ -I/usr/local/torch/install/include/TH -I/usr/local/torch/install/include/THC -I/usr/local/torch/extra/cutorch/ -I/usr/local/cuda/include/ -I. -I../nn-gpu/ -I../matrix-gpu/ -fPIC
-LIBS=-L/usr/local/cuda/lib64 -lnppi -lnpps
+CFLAGS=-g3 -ggdb -O2 -Wshadow -Wall -Werror -Wunused -I/usr/local/torch/install/include/ -I/usr/local/torch/install/include/TH -I/usr/local/torch/install/include/THC -I/usr/local/torch/extra/cutorch/ -I/usr/local/cuda/include/ -I. -I../nn-gpu/ -I../matrix-gpu/ -fPIC
+LIBS=-L/usr/local/cuda/lib64 -L/usr/local/torch/install/lib/lua/5.1/ -L/usr/local/torch/install/lib/ -lnppi -lnpps -Wl,-rpath=/usr/local/torch/install/lib/lua/5.1/ -lcutorch
 
 LIB_SRCS=\
+	pipeline.C \
+	pipeline_impl.C \
 	imageutils_lua.C \
 	nnio_lua.C \
 	normalize_lua.C \
@@ -40,6 +42,7 @@ BINS=\
 	imageutils.so \
 	nnio.so \
 	normalize.so \
+	pipeline.so \
 	simpletest.so \
 	tfidf.so \
 	timehires.so \
@@ -63,6 +66,9 @@ clean:
 	/bin/rm -f $(OBJS) $(BINS) $(LEX_SRCS) $(UGH_SRCS) $(UGH_HDRS) $(PROTOS_GENERATED) *.o $(DEPS)
 
 imageutils.so: imageutils_lua.o
+	$(CC) -shared $(CFLAGS) -o $(@) $(^) $(LIBS)
+
+pipeline.so: pipeline.o pipeline_impl.o
 	$(CC) -shared $(CFLAGS) -o $(@) $(^) $(LIBS)
 
 nnio.so: nnio_lua.o

@@ -243,24 +243,19 @@ static int normalized_square(lua_State *L) {
 // Our region of interest is the center.
 	NppiRect imgroi; imgroi.x = 0; imgroi.y = 0; imgroi.width = sx; imgroi.height = sy;
 	double scalefactor = 1.0;
-	double xshift = 0.0;
-	double yshift = 0.0;
-	// double yshift = 0.0;
-	if (sx < sy) {
-		scalefactor = sz / sx;
-		xshift = 0;
-		yshift = (sx - sy) / 2.0;
-	}
-	else {
-		scalefactor = sz / sy;
-		xshift = (sy - sx) / 2.0;
-		yshift = 0;
-	}
+	if (sx < sy) scalefactor = sz / sx;
+	else scalefactor = sz / sy;
 	NppiRect scaledroi;
 	scaledroi.x = 0;
 	scaledroi.y = 0;
 	scaledroi.width = sz;
 	scaledroi.height = sz;
+
+	double shiftx = 0;
+	double shifty = 0;
+
+	if (sx < sy) shifty = ((imgsz.width - imgsz.height) / 2.) * sz / imgsz.width;
+	else shiftx = ((imgsz.height - imgsz.width) / 2.) * sz / imgsz.height;
 
 	THCudaTensor *scaled = (THCudaTensor *)luaT_checkudata(L, -1, "torch.CudaTensor");
 	int ss = nppiResizeSqrPixel_32f_C3R(
@@ -273,8 +268,8 @@ static int normalized_square(lua_State *L) {
 		scaledroi,
 		scalefactor,
 		scalefactor,
-		xshift,
-		yshift,
+		shiftx,
+		shifty,
 		interpolationmode
 	);
 	luax21_assert(L, ss >= 0, "nppiResizeSqrPixel_32f_C3R returned %d", ss);

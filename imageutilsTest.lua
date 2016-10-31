@@ -4,6 +4,7 @@ require "cutorch"
 require "image"
 require "imageutils"
 require "dump_table"
+require "fprintf"
 
 function testimage()
 	local halfsz = 240
@@ -78,14 +79,26 @@ function rotatecrop_test()
 end
 
 function scale_test()
-	local img = image.load("/tmp/imageutilstest/mom_miles-scale.png"):permute(2,3,1)
+	local img = image.load("/tmp/imageutilstest/leela-scale.png"):permute(2,3,1)
 	-- local img = testimage()
-	
 	for i = 1,128 do
+		fprintf(io.stderr, "%d\n", i)
+		local sx = (0.5 + (i-1) / 127.) * img:size(2) -- This will go from 0.5..1.5
+		local sy = (0.5 + (i-1) / 127.) * img:size(1) -- This will go from 0.5..1.5
+		qq = imageutils.scale(sx, sy, img:cuda())
+		image.save(string.format("/tmp/imageutilstest/leela-scale-%03d.png", i), qq:permute(3,1,2))
+	end
+end
+
+function normalized_square_test()
+	local img = image.load("/tmp/imageutilstest/mom_miles-normalized_square.png"):permute(2,3,1)
+	-- local img = testimage()
+	for i = 1,128 do
+		fprintf(io.stderr, "%d\n", i)
 		local sx = (0.5 + (i-1) / 127.) * img:size(2) -- This will go from 0.5..1.5
 		local sy = (0.5 + (i-1) / 127.) * img:size(1) -- This will go from 0.5..1.5
 		qq = imageutils.normalized_square(sy, img:cuda())
-		image.save(string.format("/tmp/imageutilstest/mom_miles-scale-%03d.png", i), qq:permute(3,1,2))
+		image.save(string.format("/tmp/imageutilstest/mom_miles-normalized_square-%03d.png", i), qq:permute(3,1,2))
 	end
 end
 
@@ -118,4 +131,8 @@ function adjust_contrast_test()
 end
 
 -- gaussian_blur_test()
-scale_test()
+-- rotatecrop_test()
+-- scale_test()
+normalized_square_test()
+-- colorwash_test()
+-- adjust_contrast_test()

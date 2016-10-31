@@ -3,6 +3,7 @@ local BinaryStochastic = torch.class('nn.BinaryStochastic', 'nn.Sigmoid')
 function BinaryStochastic:__init(lo, hi)
 	nn.Sigmoid.__init(self)
 	self.rawoutput = torch.Tensor()
+	self.train = true
 	self.lo = lo or 0
 	self.hi = hi or 1
 end
@@ -30,15 +31,14 @@ function BinaryStochastic:updateOutput(input)
 		self.cpubuff2:bernoulli(self.cpubuff1)
 
 		self.output:copy(self.cpubuff2)
-	else
+	end
 -- Why the scale from 0..1 to 0.1..1.9? Because, if we simply multiplied by 2
 -- we _could_ get 0..2 (_if_ the input was _actually_ 1 (finite numeric precision and all that)
 -- So, instead, we scale 0..1 to 0.1..1.9 and just floor that.
 --      b == lo
 -- a      == (hi-lo)
 
-		self.output:mul(1.8):add(0.1):floor():mul(self.hi-self.lo):add(self.lo)
-	end
+	self.output:mul(1.8):add(0.1):floor():mul(self.hi-self.lo):add(self.lo)
 	return self.output
 end
 
