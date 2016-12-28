@@ -42,18 +42,21 @@ function main(argv)
 		input[{i,{},{},{}}]:copy(img)
 	end
 	input = input:permute(1, 3, 4, 2):contiguous()
-	output = torch.CudaTensor(input:size(1), 227, 227, 3):fill(1.0):contiguous()
 
 	local pp = pipeline.new()
 
-	local tt = torch.Timer()
-	pp:run(true, input, output)
-	print(tt:time())
+	for j = 1, 100 do
+		output = torch.CudaTensor(input:size(1), 227, 227, 3):fill(1.0):contiguous()
+		local tt = torch.Timer()
+		pp:run(true, input, output)
+		print(tt:time())
 
-	output = output:permute(1,4,2,3)
-	for i, fn in ipairs(files) do
-		local ofn, _ = fn:gsub("/input/", "/output/")
-		image.save(ofn, output[i])
+		output = output:permute(1,4,2,3)
+		print(j)
+		for i, fn in ipairs(files) do
+			local ofn, _ = fn:gsub("/input/", "/output/")
+			image.save(string.format("/tmp/qball/output/%04d.png", j)  , output[i])
+		end
 	end
 end
 
