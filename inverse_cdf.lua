@@ -2,8 +2,7 @@
 
 -- This is adapted from http://www.johndcook.com/blog/normal_cdf_inverse/
 
-function inverse_cdf(p)
--- We want to give p as a vector. batchsz x 1?
+function inverse_cdf(realp)
 	local function rational_approximation(t)
 		local c = torch.DoubleTensor({{2.515517, 0.802853, 0.010328}}):t():typeAs(t)
 		local d = torch.DoubleTensor({{1.432788, 0.189269, 0.001308}}):t():typeAs(t)
@@ -15,6 +14,10 @@ function inverse_cdf(p)
 		return rv
 	end
 
+-- We want to give p as a matrix. But.. This is problematic, because of the matrix
+-- multiplication above. But, it's no problem. We can recast it as a vector ((row*col), 1)
+-- do our computation, then recast the result back as a matrix, right? easy peasy.
+	local p = realp:view(realp:numel(), 1)
 	assert(p:le(1):all())
 	assert(p:ge(0):all())
 
@@ -22,7 +25,7 @@ function inverse_cdf(p)
 	local oneifge = -oneiflt
 
 	local stage = 1
-	local rv = torch.cmul(oneifge, rational_approximation(torch.sqrt(torch.mul(torch.log(torch.add(torch.cmul(p, oneiflt), p:ge(0.5):typeAs(p))),-2))))
+	local rv = torch.cmul(oneifge, rational_approximation(torch.sqrt(torch.mul(torch.log(torch.add(torch.cmul(p, oneiflt), p:ge(0.5):typeAs(p))),-2)))):reshape(realp:size())
 	return rv
 end
 
