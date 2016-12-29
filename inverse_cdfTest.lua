@@ -16,6 +16,10 @@ function main()
 	local rms = torch.sqrt(sumerr2 / data:numel())
 	print(rms)
 	assert(rms <= 1e-4)
+	local p = torch.DoubleTensor({0.0, 1.0})
+	local z = inverse_cdf(p)
+	print(p)
+	print(z)
 end
 
 main()
