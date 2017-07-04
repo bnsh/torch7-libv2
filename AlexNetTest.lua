@@ -7,8 +7,6 @@ require "nnio"
 require "lfs"
 local nnio_util = require "nnio_util"
 require "image"
-local optnet = require "optnet"
-local generateGraph = require "optnet.graphgen"
 require "AlexNet"
 require "fprintf"
 
@@ -30,16 +28,6 @@ local function read_labels(fn)
 	return rv
 end
 
-local function generateGraphs(mlp, input, directory, label)
-	lfs.mkdir(directory)
-	local g = generateGraph(mlp, input, { nodeData = function(oldData, tensor) return oldData .. '\n' .. 'Size: ' .. tensor:numel() end })
-	local fbase = string.format("%s/graph-%s", directory, label)
-	assert(g ~= nil)
-	io.stderr:write(string.format("Gets Here (fbase=%s)\n", fbase))
-	graph.dot(g, title, fbase)
-	io.stderr:write("And even here\n")
-end
-
 local function untangle(mlp, lo,hi)
 	local rv = nn.Sequential()
 	for i = lo,hi do
@@ -53,7 +41,6 @@ local mine = nn.AlexNet(nil, false):add(nn.Squeeze()):add(nn.LogSoftMax())
 local sergey = loadcaffe.load("/tmp/an/deploy.prototxt", "/tmp/an/bvlc_alexnet.caffemodel", "cudnn")
 
 mine:forward(torch.randn(16,3,227,227))
-generateGraphs(mine, torch.randn(16,3,227,227), "/tmp/blergh", "before")
 
 local batchsz = 10
 local mappings = {

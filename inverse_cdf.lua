@@ -19,18 +19,30 @@ function inverse_cdf(realp)
 -- multiplication above. But, it's no problem. We can recast it as a vector ((row*col), 1)
 -- do our computation, then recast the result back as a matrix, right? easy peasy.
 	local p = realp:view(realp:numel())
-	local  ones = p:gt(1-1e-6):nonzero():view(-1)
-	local zeros = p:lt(  1e-6):nonzero():view(-1)
+	local ones = torch.LongTensor(0)
+	local zeros = torch.LongTensor(0)
+	if p:gt(1-1e-6):any() then
+		ones = p:gt(1-1e-6):byte():nonzero():view(-1) -- we need they byte() in case it's a CudaTensor
+		if not torch.isTensor(ones) then
+			ones = torch.LongTensor({ones})
+		end
+	end
+
+	if p:lt(1e-6):any() then
+		zeros = p:lt(  1e-6):byte():nonzero():view(-1) -- we need they byte() in case it's a CudaTensor
+		if not torch.isTensor(zeros) then
+			zeros = torch.LongTensor({zeros})
+		end
+	end
 	assert(p:le(1):all())
 	assert(p:ge(0):all())
 
 	local oneiflt = p:lt(0.5):long():mul(2):add(-1):typeAs(p)
 	local oneifge = -oneiflt
 
-	local stage = 1
 	local rv = torch.cmul(oneifge, rational_approximation(torch.sqrt(torch.mul(torch.log(torch.add(torch.cmul(p, oneiflt), p:ge(0.5):typeAs(p))),-2))))
-	rv:indexFill(1, zeros, -6)
-	rv:indexFill(1, ones, 6)
+	if zeros:numel() > 0 then rv:indexFill(1, zeros, -6) end
+	if ones:numel() > 0 then rv:indexFill(1, ones, 6) end
 	rv = rv:reshape(realp:size())
 	return rv
 end
