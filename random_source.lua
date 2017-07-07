@@ -9,11 +9,16 @@
 	in point of fact, both pytorch and luatorch _do_ use mersenne
 	twister. But, this allows me to exactly control where in
 	the sequence things are when they get loaded.
+
+	BUT. We can use a seed, and put it in a consistent state.
+	Now, I no longer need random_source_create.lua
 ]=]
 
-local function random_source(fn, sz)
-	local random_src = torch.DoubleTensor(sz)
-	nnio.load(fn, random_src)
+local function random_source(seed, sz, generator)
+	if seed == nil then seed = 12345 end
+	if generator == nil then generator = torch.randn end
+	torch.manualSeed(seed)
+	local random_src = generator(sz)
 	local pos = 0
 
 	local function grab(size)
@@ -21,13 +26,14 @@ local function random_source(fn, sz)
 		local rpos = 0
 
 		while rpos < size do
-			local grabsz = size
+			local grabsz = size-rpos
 			if pos + grabsz >= random_src:size(1) then
 				grabsz = random_src:size(1) - pos
 			end
 
 			-- Now, those are zero based (Because I
 			-- originally wrote simile12fulltest.py)
+			io.stderr:write(string.format("pos=%d rpos=%d grabsz=%d size=%d\n", pos, rpos, grabsz, size))
 			returnvalue:indexCopy(1, torch.range(rpos+1, rpos+grabsz):long(), random_src[{{pos+1, pos+grabsz}}]:float())
 
 			pos = (pos + grabsz) % random_src:size(1)
