@@ -11,8 +11,6 @@
 	the sequence things are when they get loaded.
 ]=]
 
-require "no_globals"
-
 local function random_source(fn, sz)
 	local random_src = torch.DoubleTensor(sz)
 	nnio.load(fn, random_src)
