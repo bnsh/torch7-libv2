@@ -31,9 +31,6 @@ local function random_source(seed, sz, generator)
 				grabsz = random_src:size(1) - pos
 			end
 
-			-- Now, those are zero based (Because I
-			-- originally wrote simile12fulltest.py)
-			io.stderr:write(string.format("pos=%d rpos=%d grabsz=%d size=%d\n", pos, rpos, grabsz, size))
 			returnvalue:indexCopy(1, torch.range(rpos+1, rpos+grabsz):long(), random_src[{{pos+1, pos+grabsz}}]:float())
 
 			pos = (pos + grabsz) % random_src:size(1)
